@@ -33,4 +33,4 @@ K8sToolbox was inspired by the [swiss-army-knife](https://github.com/leodotcloud
 We welcome contributions from the community! Feel free to open an issue or submit a pull request if you'd like to add new features or report a bug. Check out our [CONTRIBUTING.md](CONTRIBUTING.md) for more details on how to get involved.
 
 ## License
-K8sToolbox is licensed under the [MIT License](LICENSE).
+K8sToolbox is licensed under the [Apache License 2.0](LICENSE).
