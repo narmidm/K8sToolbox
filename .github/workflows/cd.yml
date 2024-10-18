@@ -31,14 +31,17 @@ jobs:
           VERSION=${GITHUB_REF##*/}
           echo "VERSION=$VERSION" >> $GITHUB_ENV
 
-      # Step 5: Build Docker image
+      # Step 5: Build and Tag Docker Image
       - name: Build Docker Image
         run: |
-          docker build -t k8stoolbox:latest -f docker/Dockerfile .
-          docker tag k8stoolbox:latest narmidm/k8stoolbox:${{ env.VERSION }}
+          # Build Docker image
+          docker build -t narmidm/k8stoolbox:latest -f docker/Dockerfile .
+          # Tag the Docker image with the release version
+          docker tag narmidm/k8stoolbox:latest narmidm/k8stoolbox:${{ env.VERSION }}
 
-      # Step 6: Push Docker Image with Latest and Version Tag
+      # Step 6: Push Docker Image
       - name: Push Docker Image
         run: |
+          # Push Docker image with latest and version tags
           docker push narmidm/k8stoolbox:latest
           docker push narmidm/k8stoolbox:${{ env.VERSION }}
