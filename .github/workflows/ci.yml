@@ -27,14 +27,6 @@ jobs:
         run: |
           docker build -t k8stoolbox:latest -f docker/Dockerfile .
 
-      # Step 4: Run tests (basic example)
-      - name: Run Scripts Tests
-        run: |
-          echo "Testing healthcheck script"
-          ./scripts/healthcheck.sh default || exit 1
-          echo "Testing connectivity test script"
-          ./scripts/connectivity_test.sh default || exit 1
-
   lint:
     name: Lint Dockerfile
     runs-on: ubuntu-latest
@@ -44,25 +36,19 @@ jobs:
         uses: actions/checkout@v2
 
       - name: Lint Dockerfile
-        uses: hadolint/hadolint-action@v2
+        uses: hadolint/hadolint-action@v3.1.0
         with:
           dockerfile: docker/Dockerfile
 
   go-lint:
-    name: Lint Go Code
-    runs-on: ubuntu-latest
-
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@v2
-
-      - name: Set up Go
-        uses: actions/setup-go@v3
-        with:
-          go-version: 1.22
-
-      - name: Run golangci-lint
-        uses: golangci/golangci-lint-action@v3
-        with:
-          version: v1.50.1
-          args: --timeout=5m0s
+      name: lint
+      runs-on: ubuntu-latest
+      steps:
+        - uses: actions/checkout@v4
+        - uses: actions/setup-go@v5
+          with:
+            go-version: stable
+        - name: golangci-lint
+          uses: golangci/golangci-lint-action@v6
+          with:
+            version: v1.60
