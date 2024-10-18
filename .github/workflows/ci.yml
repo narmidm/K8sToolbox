@@ -22,10 +22,10 @@ jobs:
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v2
 
-      # Step 3: Build Docker image for Multiple Architectures (without pushing)
-      - name: Build Multi-Arch Docker Image
+      # Step 3: Build Docker image
+      - name: Build Docker Image
         run: |
-          docker buildx build --platform linux/amd64 -t k8stoolbox:latest -f docker/Dockerfile --load
+          docker build -t k8stoolbox:latest -f docker/Dockerfile .
 
       # Step 4: Run tests (basic example)
       - name: Run Scripts Tests

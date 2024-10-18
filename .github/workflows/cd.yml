@@ -6,7 +6,7 @@ on:
 
 jobs:
   push:
-    name: Push Multi-Arch Docker Image to Registry
+    name: Push Docker Image to Registry
     runs-on: ubuntu-latest
 
     steps:
@@ -31,7 +31,14 @@ jobs:
           VERSION=${GITHUB_REF##*/}
           echo "VERSION=$VERSION" >> $GITHUB_ENV
 
-      # Step 5: Build and Push Multi-Architecture Docker Image
-      - name: Build and Push Multi-Arch Docker Image
+      # Step 5: Build Docker image
+      - name: Build Docker Image
         run: |
-          docker buildx build --platform linux/amd64 -t narmidm/k8stoolbox:latest -t narmidm/k8stoolbox:${{ env.VERSION }} -f docker/Dockerfile --push .
+          docker build -t k8stoolbox:latest -f docker/Dockerfile .
+          docker tag k8stoolbox:latest narmidm/k8stoolbox:${{ env.VERSION }}
+
+      # Step 6: Push Docker Image with Latest and Version Tag
+      - name: Push Docker Image
+        run: |
+          docker push narmidm/k8stoolbox:latest
+          docker push narmidm/k8stoolbox:${{ env.VERSION }}
