@@ -1,16 +1,16 @@
-![CI Status](https://github.com/narmidm/k8stoolbox/actions/workflows/ci.yml/badge.svg)
-![CD Status](https://github.com/narmidm/k8stoolbox/actions/workflows/cd.yml/badge.svg)
-![Docker Image Version](https://img.shields.io/docker/v/narmidm/k8stoolbox?sort=semver)
-![Docker Pulls](https://img.shields.io/docker/pulls/narmidm/k8stoolbox)
-![GitHub go.mod Go version](https://img.shields.io/github/go-mod/go-version/narmidm/K8sToolbox)
-![GitHub License](https://img.shields.io/github/license/narmidm/K8sToolbox)
-![X (formerly Twitter) Follow](https://img.shields.io/twitter/follow/that_imran)
+[![CI Status](https://github.com/narmidm/k8stoolbox/actions/workflows/ci.yml/badge.svg)](https://github.com/narmidm/K8sToolbox/actions/workflows/ci.yml)
+[![CD Status](https://github.com/narmidm/k8stoolbox/actions/workflows/cd.yml/badge.svg)](https://github.com/narmidm/K8sToolbox/actions/workflows/cd.yml)
+[![Docker Image Version](https://img.shields.io/docker/v/narmidm/k8stoolbox?sort=semver)](https://hub.docker.com/repository/docker/narmidm/k8stoolbox)
+[![Docker Pulls](https://img.shields.io/docker/pulls/narmidm/k8stoolbox)](https://hub.docker.com/repository/docker/narmidm/k8stoolbox)
+[![GitHub go.mod Go version](https://img.shields.io/github/go-mod/go-version/narmidm/K8sToolbox)](https://raw.githubusercontent.com/narmidm/K8sToolbox/refs/heads/master/go.mod)
+[![GitHub License](https://img.shields.io/github/license/narmidm/K8sToolbox)](https://raw.githubusercontent.com/narmidm/K8sToolbox/refs/heads/master/LICENSE)
+[![X (formerly Twitter) Follow](https://img.shields.io/twitter/follow/that_imran)](https://x.com/that_imran)
 <a href="https://www.linkedin.com/comm/mynetwork/discovery-see-all?usecase=PEOPLE_FOLLOWS&followMember=narmidm" target="blank"><img src="https://img.shields.io/badge/LinkedIn-Connect-blue" alt="narmidm" /></a>
 ![Contributors](https://img.shields.io/github/contributors/narmidm/k8stoolbox)
-![GitHub Issues](https://img.shields.io/github/issues/narmidm/k8stoolbox)
-![GitHub Stars](https://img.shields.io/github/stars/narmidm/k8stoolbox)
-![GitHub Forks](https://img.shields.io/github/forks/narmidm/k8stoolbox)
-![Last Commit](https://img.shields.io/github/last-commit/narmidm/k8stoolbox)
+[![GitHub Issues](https://img.shields.io/github/issues/narmidm/k8stoolbox)](https://github.com/narmidm/K8sToolbox/issues)
+[![GitHub Stars](https://img.shields.io/github/stars/narmidm/k8stoolbox)](https://github.com/narmidm/K8sToolbox/stargazers)
+[![GitHub Forks](https://img.shields.io/github/forks/narmidm/k8stoolbox)](https://github.com/narmidm/K8sToolbox/forks)
+[![Last Commit](https://img.shields.io/github/last-commit/narmidm/k8stoolbox)](https://github.com/narmidm/K8sToolbox/commits/master/)
 
 
 
