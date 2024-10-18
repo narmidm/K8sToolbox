@@ -1,0 +1,31 @@
+# K8sToolbox Debug Pod Manifest
+apiVersion: v1
+kind: Pod
+metadata:
+  name: k8stoolbox-debug
+  namespace: default
+  labels:
+    app: k8stoolbox
+spec:
+  containers:
+    - name: k8stoolbox
+      image: narmidm/k8stoolbox:latest
+      imagePullPolicy: IfNotPresent
+      command: ["/bin/sh"]
+      resources:
+        requests:
+          memory: "64Mi"
+          cpu: "50m"
+        limits:
+          memory: "256Mi"
+          cpu: "500m"
+      securityContext:
+        privileged: true
+      volumeMounts:
+        - name: host-root
+          mountPath: /host
+  volumes:
+    - name: host-root
+      hostPath:
+        path: /
+        type: Directory
