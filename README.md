@@ -1,4 +1,6 @@
-![Build Status](https://github.com/narmidm/k8stoolbox/actions/workflows/ci.yml/badge.svg)
+![CI Status](https://github.com/narmidm/k8stoolbox/actions/workflows/ci.yml/badge.svg)
+![CD Status](https://github.com/narmidm/k8stoolbox/actions/workflows/cd.yml/badge.svg)
+![Docker Image Version](https://img.shields.io/docker/v/narmidm/k8stoolbox?sort=semver)
 ![Docker Pulls](https://img.shields.io/docker/pulls/narmidm/k8stoolbox)
 ![GitHub go.mod Go version](https://img.shields.io/github/go-mod/go-version/narmidm/K8sToolbox)
 ![GitHub License](https://img.shields.io/github/license/narmidm/K8sToolbox)
