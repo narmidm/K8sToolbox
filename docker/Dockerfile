@@ -64,13 +64,8 @@ RUN curl -L -o /usr/local/bin/stern https://github.com/stern/stern/releases/down
     chmod +x /usr/local/bin/stern
 
 # Install k9s
-RUN curl -L -o /usr/local/bin/k9s https://github.com/derailed/k9s/releases/download/v0.27.3/k9s_Linux_x86_64.tar.gz && \
+RUN curl -L -o /usr/local/bin/k9s https://github.com/derailed/k9s/releases/download/v0.32.5/k9s_Linux_amd64.tar.gz && \
     tar -xz -C /usr/local/bin/ -f /usr/local/bin/k9s && chmod +x /usr/local/bin/k9s
-
-# Install kubens and kubectx
-RUN git clone https://github.com/ahmetb/kubectx /opt/kubectx && \
-    ln -s /opt/kubectx/kubens /usr/local/bin/kubens && \
-    ln -s /opt/kubectx/kubectx /usr/local/bin/kubectx
 
 # Install mc (MinIO Client)
 RUN curl -O https://dl.min.io/client/mc/release/linux-amd64/mc && \
@@ -79,6 +74,28 @@ RUN curl -O https://dl.min.io/client/mc/release/linux-amd64/mc && \
 
 # Copy the Golang executable from the builder stage
 COPY --from=builder /app/k8stoolbox /usr/local/bin/k8stoolbox
+
+# Copy helper scripts
+COPY scripts/ /usr/local/bin/scripts/
+
+# Ensure scripts are executable
+RUN chmod +x /usr/local/bin/scripts/*.sh
+
+# Create symlinks for easy access to scripts
+RUN ln -s /usr/local/bin/scripts/aggregate_logs.sh /usr/local/bin/aggregate_logs && \
+    ln -s /usr/local/bin/scripts/auto_recover.sh /usr/local/bin/auto_recover && \
+    ln -s /usr/local/bin/scripts/auto_scaling.sh /usr/local/bin/auto_scaling && \
+    ln -s /usr/local/bin/scripts/backup_restore.sh /usr/local/bin/backup_restore && \
+    ln -s /usr/local/bin/scripts/clean_stale_resources.sh /usr/local/bin/clean_stale_resources && \
+    ln -s /usr/local/bin/scripts/connectivity_test.sh /usr/local/bin/connectivity_test && \
+    ln -s /usr/local/bin/scripts/delete_stuck_crds.sh /usr/local/bin/delete_stuck_crds && \
+    ln -s /usr/local/bin/scripts/delete_stuck_namespace.sh /usr/local/bin/delete_stuck_namespace && \
+    ln -s /usr/local/bin/scripts/healthcheck.sh /usr/local/bin/healthcheck && \
+    ln -s /usr/local/bin/scripts/network_diag.sh /usr/local/bin/network_diag && \
+    ln -s /usr/local/bin/scripts/resource_usage.sh /usr/local/bin/resource_usage && \
+    ln -s /usr/local/bin/scripts/restart_failed_pods.sh /usr/local/bin/restart_failed_pods && \
+    ln -s /usr/local/bin/scripts/snapshot_audit.sh /usr/local/bin/snapshot_audit && \
+    ln -s /usr/local/bin/scripts/test_network_policy.sh /usr/local/bin/test_network_policy
 
 # Clean up unnecessary files to keep the image small
 RUN rm -rf /var/cache/apk/*
