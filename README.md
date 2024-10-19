@@ -28,7 +28,7 @@ Equipped with a rich collection of utilities that include advanced network diagn
 
 K8sToolbox also integrates essential third-party utilities like `kubectl`, `stern`, and `k9s`, providing a seamless, command-driven experience for interacting with Kubernetes clusters. This toolkit not only simplifies debugging processes but also provides the scalability and robustness necessary to maintain large-scale, multi-node environments effectively. By combining a vast array of capabilities into a single, easy-to-use image, K8sToolbox ensures that Kubernetes management is more accessible, efficient, and reliable than ever before.
 
-### Use Cases
+## Use Cases
 **K8sToolbox** is perfect for:
 - **Cluster Troubleshooting**: Quickly diagnose issues in your cluster, such as resource contention, network issues, or failed pods.
 - **Maintenance**: Clean up stale or unused resources like completed jobs and old replicasets to keep your cluster healthy.
