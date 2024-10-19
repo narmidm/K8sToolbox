@@ -53,7 +53,18 @@ RUN apk add --no-cache \
     helm \
     socat \
     ncdu \
-    bash
+    bash \
+    ca-certificates \
+    conntrack-tools \
+    ethtool \
+    iptables \
+    less \
+    mtr \
+    openssh-client \
+    psmisc \
+    tcptraceroute \
+    ngrep \
+    yq
 
 # Install kubectl
 RUN curl -LO "https://dl.k8s.io/release/$(curl -L -s https://dl.k8s.io/release/stable.txt)/bin/linux/amd64/kubectl" && \
@@ -63,14 +74,17 @@ RUN curl -LO "https://dl.k8s.io/release/$(curl -L -s https://dl.k8s.io/release/s
 RUN curl -L -o /usr/local/bin/stern https://github.com/stern/stern/releases/download/v1.22.0/stern_linux_amd64 && \
     chmod +x /usr/local/bin/stern
 
-# Install k9s
-RUN curl -L -o /usr/local/bin/k9s https://github.com/derailed/k9s/releases/download/v0.32.5/k9s_Linux_amd64.tar.gz && \
-    tar -xz -C /usr/local/bin/ -f /usr/local/bin/k9s && chmod +x /usr/local/bin/k9s
+# Install k9s (Fixed Download and Extraction)
+RUN curl -L -o /tmp/k9s_Linux_amd64.tar.gz https://github.com/derailed/k9s/releases/download/v0.32.5/k9s_Linux_amd64.tar.gz && \
+    tar -xz -C /usr/local/bin/ -f /tmp/k9s_Linux_amd64.tar.gz k9s && chmod +x /usr/local/bin/k9s && rm /tmp/k9s_Linux_amd64.tar.gz
 
 # Install mc (MinIO Client)
 RUN curl -O https://dl.min.io/client/mc/release/linux-amd64/mc && \
     chmod +x mc && \
     mv mc /usr/local/bin/
+
+# Set the working directory
+WORKDIR /root/
 
 # Copy the Golang executable from the builder stage
 COPY --from=builder /app/k8stoolbox /usr/local/bin/k8stoolbox
@@ -100,5 +114,5 @@ RUN ln -s /usr/local/bin/scripts/aggregate_logs.sh /usr/local/bin/aggregate_logs
 # Clean up unnecessary files to keep the image small
 RUN rm -rf /var/cache/apk/*
 
-# Set the default command to an interactive shell for general debugging and troubleshooting
-CMD ["/bin/sh"]
+# Run the Go application
+CMD ["tail", "-f", "/dev/null"]

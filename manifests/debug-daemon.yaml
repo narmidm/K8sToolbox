@@ -1,4 +1,42 @@
-# K8sToolbox DaemonSet Manifest
+# K8sToolbox DaemonSet Manifest with ServiceAccount
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: k8stoolbox-cluster-admin
+  namespace: default
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: k8stoolbox-cluster-admin-binding
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: cluster-admin
+subjects:
+  - kind: ServiceAccount
+    name: k8stoolbox-cluster-admin
+    namespace: default
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: k8stoolbox-cluster-admin
+  namespace: default
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: k8stoolbox-cluster-admin-binding
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: cluster-admin
+subjects:
+  - kind: ServiceAccount
+    name: k8stoolbox-cluster-admin
+    namespace: default
+---
 apiVersion: apps/v1
 kind: DaemonSet
 metadata:
@@ -15,11 +53,12 @@ spec:
       labels:
         app: k8stoolbox
     spec:
+      serviceAccountName: k8stoolbox-cluster-admin
       containers:
         - name: k8stoolbox
           image: narmidm/k8stoolbox:latest
           imagePullPolicy: IfNotPresent
-          command: ["/bin/sh"]
+          command: ["tail", "-f", "/dev/null"]
           resources:
             requests:
               memory: "64Mi"

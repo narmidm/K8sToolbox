@@ -9,14 +9,27 @@ import (
 	"fmt"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes"
-	"k8s.io/client-go/tools/clientcmd"
+	"k8s.io/client-go/rest"
 	"k8s.io/client-go/tools/remotecommand"
 	"log"
 	"os"
-	"path/filepath"
 )
 
+var clientset *kubernetes.Clientset
+var config *rest.Config
+
 func main() {
+	var err error
+	config, err = rest.InClusterConfig()
+	if err != nil {
+		panic(err.Error())
+	}
+	// creates the clientset
+	clientset, err = kubernetes.NewForConfig(config)
+	if err != nil {
+		panic(err.Error())
+	}
+
 	// Define flags for CLI commands
 	healthCheckCmd := flag.NewFlagSet("healthcheck", flag.ExitOnError)
 	namespace := healthCheckCmd.String("namespace", "default", "Namespace to check pod health")
@@ -56,21 +69,6 @@ func main() {
 
 // performHealthCheck performs a health check on all pods in the specified namespace
 func performHealthCheck(namespace string) {
-	// Load Kubernetes client configuration
-	kubeconfig := filepath.Join(os.Getenv("HOME"), ".kube", "config")
-	config, err := clientcmd.BuildConfigFromFlags("", kubeconfig)
-	if err != nil {
-		fmt.Printf("Error loading kubeconfig: %v\n", err)
-		os.Exit(1)
-	}
-
-	// Create Kubernetes clientset
-	clientset, err := kubernetes.NewForConfig(config)
-	if err != nil {
-		fmt.Printf("Error creating Kubernetes client: %v\n", err)
-		os.Exit(1)
-	}
-
 	// Get all pods in the specified namespace
 	pods, err := clientset.CoreV1().Pods(namespace).List(context.TODO(), metav1.ListOptions{})
 	if err != nil {
@@ -92,19 +90,8 @@ func performHealthCheck(namespace string) {
 
 // testPodConnectivity tests network connectivity from a pod to a specified target
 func testPodConnectivity(namespace, podName, target string) {
-	// Load Kubernetes client configuration
-	kubeconfig := filepath.Join(os.Getenv("HOME"), ".kube", "config")
-	config, err := clientcmd.BuildConfigFromFlags("", kubeconfig)
-	if err != nil {
-		fmt.Printf("Error loading kubeconfig: %v\n", err)
-		os.Exit(1)
-	}
-
-	// Create Kubernetes clientset
-	clientset, err := kubernetes.NewForConfig(config)
-	if err != nil {
-		fmt.Printf("Error creating Kubernetes client: %v\n", err)
-		os.Exit(1)
+	if clientset == nil || config == nil {
+		log.Fatalf("Error: Kubernetes clientset or config is not initialized")
 	}
 
 	// Set up the exec request
