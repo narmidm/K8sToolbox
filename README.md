@@ -26,7 +26,9 @@ K8sToolbox is an all-in-one, versatile toolkit engineered to streamline the mana
 
 Equipped with a rich collection of utilities that include advanced network diagnostics, automated health checks, resource monitoring, and recovery mechanisms, K8sToolbox empowers teams to proactively identify and resolve cluster-related challenges. Whether you need to aggregate logs, test pod connectivity, manage resources, or troubleshoot network policies, K8sToolbox offers a unified solution that significantly reduces complexity while enhancing productivity.
 
-K8sToolbox also integrates essential third-party utilities like `kubectl`, `stern`, and `k9s`, providing a seamless, command-driven experience for interacting with Kubernetes clusters. This toolkit not only simplifies debugging processes but also provides the scalability and robustness necessary to maintain large-scale, multi-node environments effectively. By combining a vast array of capabilities into a single, easy-to-use image, K8sToolbox ensures that Kubernetes management is more accessible, efficient, and reliable than ever before.
+K8sToolbox integrates essential third-party utilities like kubectl, stern, k9s, and mc (MinIO Client), providing a seamless, command-driven experience for interacting with Kubernetes clusters. This toolkit not only simplifies debugging processes but also provides the scalability and robustness necessary to maintain large-scale, multi-node environments effectively. By combining a vast array of capabilities into a single, easy-to-use image, K8sToolbox ensures that Kubernetes management is more accessible, efficient, and reliable than ever before.
+
+Tools included: curl, iproute2, iputils, netcat-openbsd, tcpdump, bind-tools, traceroute, iperf3, jq, strace, htop, iftop, net-tools, rsync, openssl, gpg, vim, nano, busybox-extras, mariadb-client, postgresql-client, redis, mongodb-tools, helm, socat, ncdu, bash, ca-certificates, conntrack-tools, ethtool, iptables, less, mtr, openssh-client, psmisc, tcptraceroute, ngrep, yq, kubectl, stern, k9s, mc.
 
 ## Use Cases
 **K8sToolbox** is perfect for:
