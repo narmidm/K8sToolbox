@@ -20,7 +20,7 @@ COPY . ./
 RUN go build -o k8stoolbox main.go
 
 # Stage 2: Final Image
-FROM alpine:latest
+FROM alpine:3.20.3
 
 # Set environment variables
 ENV LANG=C.UTF-8

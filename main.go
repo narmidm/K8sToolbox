@@ -33,10 +33,16 @@ func main() {
 
 	switch os.Args[1] {
 	case "healthcheck":
-		healthCheckCmd.Parse(os.Args[2:])
+		err := healthCheckCmd.Parse(os.Args[2:])
+		if err != nil {
+			return
+		}
 		performHealthCheck(*namespace)
 	case "connectivity":
-		connectivityCheckCmd.Parse(os.Args[2:])
+		err := connectivityCheckCmd.Parse(os.Args[2:])
+		if err != nil {
+			return
+		}
 		if *podName == "" || *target == "" {
 			fmt.Println("Please specify both pod name and target for connectivity check")
 			os.Exit(1)
@@ -123,7 +129,11 @@ func testPodConnectivity(namespace, podName, target string) {
 		log.Fatalf("Could not initialize command: %v", err)
 	}
 
-	err = exec.Stream(remotecommand.StreamOptions{
+	// Create a context that can be used for managing cancellation and timeout
+	ctx := context.Background()
+
+	// Call StreamWithContext instead of the deprecated Stream
+	err = exec.StreamWithContext(ctx, remotecommand.StreamOptions{
 		Stdin:  os.Stdin,
 		Stdout: os.Stdout,
 		Stderr: os.Stderr,

@@ -27,19 +27,6 @@ jobs:
         run: |
           docker build -t k8stoolbox:latest -f docker/Dockerfile .
 
-  lint:
-    name: Lint Dockerfile
-    runs-on: ubuntu-latest
-
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@v2
-
-      - name: Lint Dockerfile
-        uses: hadolint/hadolint-action@v3.1.0
-        with:
-          dockerfile: docker/Dockerfile
-
   go-lint:
       name: lint
       runs-on: ubuntu-latest

@@ -16,7 +16,7 @@
 
 
 # K8sToolbox
-<img src="assets/logo.png" alt="K8sToolbox Logo" width="200"/>
+<img src="assets/logo.png" alt="K8sToolbox Logo" width="160"/>
 
 ### Use Cases
 **K8sToolbox** is perfect for:
