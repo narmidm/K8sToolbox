@@ -28,7 +28,8 @@
 
 With **K8sToolbox**, you can:
 - Execute health checks, manage stuck resources, aggregate logs, and perform network diagnostics.
-- Run custom scripts directly from your local machine or inside a Kubernetes pod using shell exec.
+- Run custom scripts directly from your local machine or inside a Kubernetes pod using shell exec. **"For detailed usage instructions on the scripts, please refer to [Using K8sToolbox Scripts](#using-k8stoolbox-scripts)."**
+
 
 ## Folder Structure
 ```
@@ -87,7 +88,7 @@ You can deploy **K8sToolbox** as either a standalone **Pod** or as a **DaemonSet
 To deploy a standalone **K8sToolbox** pod, use the following command:
 
 ```sh
-kubectl apply -f manifests/debug-pod.yaml
+kubectl apply -f https://raw.githubusercontent.com/narmidm/K8sToolbox/refs/heads/master/manifests/debug-pod.yaml
 ```
 
 This creates a pod named `k8stoolbox-debug` in the `default` namespace, which can be used for one-off debugging and troubleshooting tasks.
@@ -96,7 +97,7 @@ This creates a pod named `k8stoolbox-debug` in the `default` namespace, which ca
 To deploy **K8sToolbox** on all nodes, use the DaemonSet manifest:
 
 ```sh
-kubectl apply -f manifests/debug-daemon.yaml
+kubectl apply -f https://raw.githubusercontent.com/narmidm/K8sToolbox/refs/heads/master/manifests/debug-daemon.yaml
 ```
 
 This creates a **DaemonSet** that runs **K8sToolbox** on all nodes, making it accessible from anywhere in the cluster.
@@ -108,6 +109,8 @@ There are two primary ways to use **K8sToolbox**:
 
 #### 1. Running Scripts Locally
 You can run the scripts in the `/scripts` directory locally if you have **kubectl** configured and connected to your Kubernetes cluster.
+**"For detailed usage instructions on the scripts, please refer to [Using K8sToolbox Scripts](#using-k8stoolbox-scripts)."**
+
 
 Examples:
 
@@ -179,6 +182,185 @@ auto_recover
 backup_restore backup default
 clean_stale_resources default
 ```
+
+## Using K8sToolbox Scripts
+
+This section provides detailed information on the various utility scripts available in the `K8sToolbox` repository, located under the `/scripts` directory. Each script has been crafted to assist with common Kubernetes cluster management and troubleshooting tasks. Below, you will find how to use each script, including commands to run them directly or through the symlinks set up during installation.
+
+To learn how to use these scripts, follow the instructions provided for each script below. You can execute these commands from your local machine or within a Kubernetes pod, depending on your setup.
+
+### Running the Scripts Locally
+If you have cloned the repository and have `kubectl` configured to interact with your cluster, you can run the scripts directly by using:
+
+```sh
+./scripts/<script_name>.sh [arguments]
+```
+
+Alternatively, you can use the symlinks created for each script, allowing you to run them without specifying the full path:
+
+```sh
+<script_name> [arguments]
+```
+
+Ensure that your shell environment includes `/usr/local/bin` in the `$PATH` so that the symlinks are accessible.
+
+### Script Details
+Below is a list of all available scripts, with detailed descriptions and examples of how to use them:
+
+1. **aggregate_logs.sh**  
+   Aggregates logs from all pods within a specified namespace. This script is useful when you need a combined view of application logs.
+   ```sh
+   aggregate_logs <namespace>
+   ```
+   Example:
+   ```sh
+   aggregate_logs default
+   ```
+   This command will aggregate logs from all pods in the `default` namespace and print them to the console.
+
+2. **auto_recover.sh**  
+   Automatically recovers failed pods and restarts them as needed. This script can be run to automate pod recovery.
+   ```sh
+   auto_recover <namespace>
+   ```
+   Example:
+   ```sh
+   auto_recover kube-system
+   ```
+   This command will automatically recover any failed pods in the `kube-system` namespace by restarting them.
+
+3. **auto_scaling.sh**  
+   Adjusts deployment scaling based on resource usage. This script can help automate horizontal scaling.
+   ```sh
+   auto_scaling <namespace> <deployment_name> <desired_replicas>
+   ```
+   Example:
+   ```sh
+   auto_scaling default my-app 5
+   ```
+   This command will scale the deployment named `my-app` in the `default` namespace to `5` replicas.
+
+4. **backup_restore.sh**  
+   Backs up and restores Kubernetes resources in a namespace. Useful for disaster recovery scenarios.
+   ```sh
+   backup_restore backup <namespace>
+   backup_restore restore <namespace>
+   ```
+   Example:
+   ```sh
+   backup_restore backup default
+   ```
+   This command will back up all resources in the `default` namespace. Use `restore` instead of `backup` to restore the resources.
+
+5. **clean_stale_resources.sh**  
+   Cleans up old Kubernetes resources such as completed jobs and replicasets.
+   ```sh
+   clean_stale_resources <namespace>
+   ```
+   Example:
+   ```sh
+   clean_stale_resources default
+   ```
+   This command will clean up stale resources (e.g., completed jobs, old replicasets) in the `default` namespace.
+
+6. **connectivity_test.sh**  
+   Tests network connectivity between two pods. Useful for validating network policies.
+   ```sh
+   connectivity_test <namespace> <source_pod> <target_pod>
+   ```
+   Example:
+   ```sh
+   connectivity_test default pod-a pod-b
+   ```
+   This command will test network connectivity from `pod-a` to `pod-b` in the `default` namespace.
+
+7. **delete_stuck_crds.sh**  
+   Deletes Custom Resource Definitions (CRDs) that are stuck due to finalizers.
+   ```sh
+   delete_stuck_crds <crd_name>
+   ```
+   Example:
+   ```sh
+   delete_stuck_crds my-crd
+   ```
+   This command will forcefully delete the CRD named `my-crd` that is stuck due to finalizers.
+
+8. **delete_stuck_namespace.sh**  
+   Deletes namespaces that are stuck in terminating status.
+   ```sh
+   delete_stuck_namespace <namespace>
+   ```
+   Example:
+   ```sh
+   delete_stuck_namespace default
+   ```
+   This command will delete the `default` namespace if it is stuck in a terminating state.
+
+9. **healthcheck.sh**  
+   Performs health checks on all pods within a namespace.
+   ```sh
+   healthcheck <namespace>
+   ```
+   Example:
+   ```sh
+   healthcheck kube-system
+   ```
+   This command will perform health checks on all pods in the `kube-system` namespace and report any issues found.
+
+10. **network_diag.sh**  
+    Provides advanced network diagnostics, including traffic capture between pods.
+    ```sh
+    network_diag <namespace> <source_pod> <target_pod>
+    ```
+    Example:
+    ```sh
+    network_diag default pod-a pod-b
+    ```
+    This command will perform network diagnostics between `pod-a` and `pod-b` in the `default` namespace, including capturing traffic if needed.
+
+11. **resource_usage.sh**  
+    Monitors CPU and memory usage for nodes and pods within a namespace.
+    ```sh
+    resource_usage <namespace>
+    ```
+    Example:
+    ```sh
+    resource_usage default
+    ```
+    This command will monitor and display the CPU and memory usage for all nodes and pods in the `default` namespace.
+
+12. **restart_failed_pods.sh**  
+    Restarts all failed pods in a given namespace.
+    ```sh
+    restart_failed_pods <namespace>
+    ```
+    Example:
+    ```sh
+    restart_failed_pods kube-system
+    ```
+    This command will restart all failed pods in the `kube-system` namespace.
+
+13. **snapshot_audit.sh**  
+    Takes a snapshot of the cluster state for auditing purposes.
+    ```sh
+    snapshot_audit <namespace>
+    ```
+    Example:
+    ```sh
+    snapshot_audit default
+    ```
+    This command will take a snapshot of the cluster state for the `default` namespace, which can be used for auditing purposes.
+
+14. **test_network_policy.sh**  
+    Tests network policies by attempting connections between source and target pods.
+    ```sh
+    test_network_policy <namespace> <source_pod> <target_pod>
+    ```
+    Example:
+    ```sh
+    test_network_policy default pod-a pod-b
+    ```
+    This command will test the network policies by attempting to connect from `pod-a` to `pod-b` in the `default` namespace.
 
 ### Contributing
 We welcome contributions! Please read the [CONTRIBUTING.md](CONTRIBUTING.md) file for guidelines on how to contribute to **K8sToolbox**.
