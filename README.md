@@ -29,7 +29,7 @@ Equipped with a rich collection of utilities that include advanced network diagn
 **K8sToolbox** integrates essential third-party utilities like `kubectl`, `stern`, `k9s`, and `mc` (MinIO Client), providing a seamless, command-driven experience for interacting with Kubernetes clusters. This toolkit not only simplifies debugging processes but also provides the scalability and robustness necessary to maintain large-scale, multi-node environments effectively. By combining a vast array of capabilities into a single, easy-to-use image, K8sToolbox ensures that Kubernetes management is more accessible, efficient, and reliable than ever before.
 
 **Tools included**: 
-``curl, iproute2, iputils, netcat-openbsd, tcpdump, bind-tools, traceroute, iperf3, jq, strace, htop, iftop, net-tools, rsync, openssl, gpg, vim, nano, busybox-extras, mariadb-client, postgresql-client, redis, mongodb-tools, helm, socat, ncdu, bash, ca-certificates, conntrack-tools, ethtool, iptables, less, mtr, openssh-client, psmisc, tcptraceroute, ngrep, yq, kubectl, stern, k9s, mc``
+``curl, iproute2, iputils, netcat-openbsd, tcpdump, bind-tools, traceroute, iperf3, jq, strace, htop, iftop, net-tools, rsync, openssl, gpg, vim, nano, busybox-extras, mariadb-client, postgresql-client, redis, mongodb-tools, helm, socat, ncdu, bash, ca-certificates, conntrack-tools, ethtool, iptables, less, mtr, openssh-client, psmisc, tcptraceroute, ngrep, yq, kubectl, stern, k9s, mc, docker, nmap, screen, tmux``
 
 ## Use Cases
 **K8sToolbox** is perfect for:

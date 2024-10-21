@@ -64,7 +64,11 @@ RUN apk add --no-cache \
     psmisc \
     tcptraceroute \
     ngrep \
-    yq
+    yq \
+    docker \
+    nmap \
+    screen \
+    tmux
 
 # Install kubectl
 RUN curl -LO "https://dl.k8s.io/release/$(curl -L -s https://dl.k8s.io/release/stable.txt)/bin/linux/amd64/kubectl" && \
