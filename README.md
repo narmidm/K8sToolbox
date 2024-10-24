@@ -5,16 +5,16 @@
 [![GitHub go.mod Go version](https://img.shields.io/github/go-mod/go-version/narmidm/K8sToolbox)](https://raw.githubusercontent.com/narmidm/K8sToolbox/refs/heads/master/go.mod)
 [![GitHub License](https://img.shields.io/github/license/narmidm/K8sToolbox)](https://raw.githubusercontent.com/narmidm/K8sToolbox/refs/heads/master/LICENSE)
 [![Go Report Card](https://goreportcard.com/badge/github.com/narmidm/K8sToolbox)](https://goreportcard.com/report/github.com/narmidm/K8sToolbox)
-[![X (formerly Twitter) Follow](https://img.shields.io/twitter/follow/that_imran)](https://x.com/intent/user?screen_name=that_imran)
-[![Linktree](https://img.shields.io/badge/linktree-1de9b6?style=plastic&logo=linktree&logoColor=white)](https://linktr.ee/narmidm)
-<a href="https://www.linkedin.com/comm/mynetwork/discovery-see-all?usecase=PEOPLE_FOLLOWS&followMember=narmidm" target="blank"><img src="https://img.shields.io/badge/LinkedIn-Connect-blue" alt="narmidm" /></a>
 ![Contributors](https://img.shields.io/github/contributors/narmidm/k8stoolbox)
 [![GitHub Issues](https://img.shields.io/github/issues/narmidm/k8stoolbox)](https://github.com/narmidm/K8sToolbox/issues)
 [![GitHub Stars](https://img.shields.io/github/stars/narmidm/k8stoolbox)](https://github.com/narmidm/K8sToolbox/stargazers)
 [![GitHub Forks](https://img.shields.io/github/forks/narmidm/k8stoolbox)](https://github.com/narmidm/K8sToolbox/forks)
 [![Last Commit](https://img.shields.io/github/last-commit/narmidm/k8stoolbox)](https://github.com/narmidm/K8sToolbox/commits/master/)
 
-
+### Connect with me
+[![X (formerly Twitter) Follow](https://img.shields.io/twitter/follow/that_imran)](https://x.com/intent/user?screen_name=that_imran)
+[![Linktree](https://img.shields.io/badge/linktree-1de9b6?style=plastic&logo=linktree&logoColor=white)](https://linktr.ee/narmidm)
+<a href="https://www.linkedin.com/comm/mynetwork/discovery-see-all?usecase=PEOPLE_FOLLOWS&followMember=narmidm" target="blank"><img src="https://img.shields.io/badge/LinkedIn-Connect-blue" alt="narmidm" /></a>
 
 # K8sToolbox
 <img src="assets/logo.png" alt="K8sToolbox Logo" width="160"/>
