@@ -65,7 +65,6 @@ RUN apk add --no-cache \
     tcptraceroute \
     ngrep \
     yq \
-    docker \
     nmap \
     screen \
     tmux
