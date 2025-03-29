@@ -28,6 +28,38 @@ Equipped with a rich collection of utilities that include advanced network diagn
 
 **K8sToolbox** integrates essential third-party utilities like `kubectl`, `stern`, `k9s`, and `mc` (MinIO Client), providing a seamless, command-driven experience for interacting with Kubernetes clusters. This toolkit not only simplifies debugging processes but also provides the scalability and robustness necessary to maintain large-scale, multi-node environments effectively. By combining a vast array of capabilities into a single, easy-to-use image, K8sToolbox ensures that Kubernetes management is more accessible, efficient, and reliable than ever before.
 
+## Key Features
+
+### Core Functionality
+- **CLI Tools**: Rich command-line interface with multiple commands for different operations
+- **Scripting Capabilities**: Extensive shell script collection for common Kubernetes tasks
+- **Diagnostic Tools**: Advanced tools for troubleshooting network, resources, and cluster issues
+
+### Enhanced Monitoring
+- **Prometheus Integration**: Built-in Prometheus metrics endpoint for monitoring K8sToolbox operations
+- **Resource Metrics**: CPU, memory, and other resource metrics collection
+- **Health Metrics**: Pod, service, and node health status tracking
+- **Connectivity Metrics**: Network connectivity check results
+
+### Web UI
+- **Dashboard**: Interactive web dashboard showing cluster status at a glance
+- **Pod Management**: View, search, and manage pods from the web interface
+- **Service & Node Visualization**: Graphical representation of services and nodes
+- **Live Updates**: Real-time updates of cluster state
+- **Mobile Responsive**: Works on desktops, tablets, and mobile devices
+
+### Authentication & Security
+- **Basic Auth**: Username/password protection for the web interface
+- **Secret Management**: Secure storage of credentials in Kubernetes secrets
+- **Least Privilege**: Default deployment with minimal required permissions
+- **Security Guidelines**: Comprehensive documentation on secure deployment
+
+### Observability Platform Integration
+- **Grafana Dashboard**: Pre-built Grafana dashboard for K8sToolbox metrics
+- **ServiceMonitor**: Prometheus Operator integration through ServiceMonitor CRD
+- **Structured Logging**: JSON-formatted logs for easy integration with log aggregators
+- **Metrics Retention**: Historical metrics storage for trend analysis
+
 **Tools included**: 
 ``curl, iproute2, iputils, netcat-openbsd, tcpdump, bind-tools, traceroute, iperf3, jq, strace, htop, iftop, net-tools, rsync, openssl, gpg, vim, nano, busybox-extras, mariadb-client, postgresql-client, redis, mongodb-tools, helm, socat, ncdu, bash, ca-certificates, conntrack-tools, ethtool, iptables, less, mtr, openssh-client, psmisc, tcptraceroute, ngrep, yq, kubectl, stern, k9s, mc, nmap, screen, tmux``
 
@@ -38,11 +70,12 @@ Equipped with a rich collection of utilities that include advanced network diagn
 - **Automation**: Automate tasks like scaling deployments, resource usage checks, and more.
 - **Debugging Network Policies**: Validate network connectivity and ensure your network policies are properly configured.
 - **Log Aggregation**: Collect and analyze logs from multiple namespaces and pods to understand the state of your cluster and applications.
+- **Real-time Monitoring**: Monitor your cluster's health and performance in real-time via the web UI or Prometheus metrics.
 
 With **K8sToolbox**, you can:
 - Execute health checks, manage stuck resources, aggregate logs, and perform network diagnostics.
 - Run custom scripts directly from your local machine or inside a Kubernetes pod using shell exec. **"For detailed usage instructions on the scripts, please refer to [Using K8sToolbox Scripts](#using-k8stoolbox-scripts)."**
-
+- Monitor your cluster through the intuitive web UI or integrate with your existing observability platform.
 
 ## Folder Structure
 ```
@@ -71,12 +104,24 @@ K8sToolbox/
 │   ├── snapshot_audit.sh
 │   └── test_network_policy.sh
 │
+├── ui/
+│   └── static/                 # Web UI static files
+│       └── index.html          # Main web interface HTML file
+│
+├── charts/
+│   └── k8stoolbox/             # Helm chart for K8sToolbox
+│       ├── Chart.yaml          # Chart metadata
+│       ├── values.yaml         # Configurable values
+│       ├── templates/          # Helm templates
+│       └── dashboards/         # Grafana dashboards
+│
 ├── .gitignore
 ├── CONTRIBUTING.md             # Guidelines for contributing to K8sToolbox
 ├── LICENSE                     # License details (Apache License 2.0)
 ├── go.mod                      # Go module definition
 ├── main.go                     # Main Golang utility file for K8sToolbox
-└── README.md                   # Documentation (you're reading this!)
+├── README.md                   # Documentation (you're reading this!)
+└── SECURITY_BEST_PRACTICES.md  # Security guidelines for deployment
 ```
 
 ## Getting Started
@@ -95,7 +140,24 @@ docker build -t k8stoolbox:latest -f docker/Dockerfile .
 This will create a Docker image named `k8stoolbox` that you can use locally or push to a container registry.
 
 ### Deploying K8sToolbox in Kubernetes
-You can deploy **K8sToolbox** as either a standalone **Pod** or as a **DaemonSet** to cover all nodes.
+You can deploy **K8sToolbox** as either a standalone **Pod**, as a **DaemonSet** to cover all nodes, or using the **Helm chart** for advanced configuration.
+
+#### Using Helm (Recommended)
+To deploy K8sToolbox with Helm, which provides the most configuration options:
+
+```sh
+# Add the K8sToolbox Helm repository
+helm repo add k8stoolbox https://narmidm.github.io/K8sToolbox/charts
+
+# Update repositories
+helm repo update
+
+# Install K8sToolbox with default values
+helm install k8stoolbox k8stoolbox/k8stoolbox
+
+# Or install with custom values
+helm install k8stoolbox k8stoolbox/k8stoolbox -f my-values.yaml
+```
 
 #### Standalone Pod
 To deploy a standalone **K8sToolbox** pod, use the following command:
@@ -115,12 +177,50 @@ kubectl apply -f https://raw.githubusercontent.com/narmidm/K8sToolbox/refs/heads
 
 This creates a **DaemonSet** that runs **K8sToolbox** on all nodes, making it accessible from anywhere in the cluster.
 
-### Utilizing K8sToolbox
-There are two primary ways to use **K8sToolbox**:
-1. **Local Execution**: Running scripts directly from the local system.
-2. **Kubernetes Shell Execution**: Executing commands inside a running **K8sToolbox** pod using `kubectl exec`.
+### Accessing the Web UI
+Once deployed, you can access the K8sToolbox Web UI by port-forwarding:
 
-#### 1. Running Scripts Locally
+```sh
+kubectl port-forward svc/k8stoolbox 8080:8080
+```
+
+Then open your browser and navigate to `http://localhost:8080`. If authentication is enabled, use the credentials from your configuration, or the default:
+- Username: admin
+- Password: Password123
+
+### Accessing Prometheus Metrics
+K8sToolbox exposes Prometheus metrics at the `/metrics` endpoint. To access:
+
+```sh
+kubectl port-forward svc/k8stoolbox 9090:9090
+```
+
+Then open your browser and navigate to `http://localhost:9090/metrics`.
+
+### Using Grafana Dashboards
+K8sToolbox provides pre-built Grafana dashboards. If you have Grafana installed with the Grafana Operator:
+
+```sh
+kubectl apply -f charts/k8stoolbox/dashboards/k8stoolbox-dashboard.json
+```
+
+Or manually import the dashboard JSON from `charts/k8stoolbox/dashboards/k8stoolbox-dashboard.json` into your Grafana instance.
+
+### Utilizing K8sToolbox
+There are three primary ways to use **K8sToolbox**:
+1. **Web UI**: Access the web interface for graphical monitoring and management
+2. **Local Execution**: Running scripts directly from the local system
+3. **Kubernetes Shell Execution**: Executing commands inside a running **K8sToolbox** pod using `kubectl exec`
+
+#### 1. Using the Web UI
+The web interface provides an intuitive way to:
+- View cluster health at a glance
+- Monitor pods, services, and nodes
+- Execute health checks and diagnostics
+- View resource usage metrics
+- Test connectivity between services
+
+#### 2. Running Scripts Locally
 You can run the scripts in the `/scripts` directory locally if you have **kubectl** configured and connected to your Kubernetes cluster.
 **"For detailed usage instructions on the scripts, please refer to [Using K8sToolbox Scripts](#using-k8stoolbox-scripts)."**
 
@@ -145,7 +245,7 @@ Examples:
   ./scripts/aggregate_logs.sh default kube-system
   ```
 
-#### 2. Running Scripts in Kubernetes Pods
+#### 3. Running Scripts in Kubernetes Pods
 You can also execute the scripts inside a running **K8sToolbox** pod by using **kubectl exec**. This is useful when you need to troubleshoot issues within the cluster itself.
 
 First, find the name of the **K8sToolbox** pod:
@@ -195,6 +295,57 @@ auto_recover
 backup_restore backup default
 clean_stale_resources default
 ```
+
+## Advanced Configuration
+
+### Environment Variables
+K8sToolbox can be configured using the following environment variables:
+
+| Variable | Default | Description |
+|----------|---------|-------------|
+| ENABLE_WEB_UI | false | Enable the web UI |
+| WEB_UI_PORT | 8080 | Port for the web UI |
+| ENABLE_AUTH | true | Enable authentication for the web UI |
+| AUTH_USERNAME | admin | Username for basic authentication |
+| AUTH_PASSWORD | | Password for basic authentication |
+| ENABLE_PROMETHEUS | false | Enable Prometheus metrics endpoint |
+| PROMETHEUS_PORT | 9090 | Port for Prometheus metrics |
+| LOG_LEVEL | info | Logging level (debug, info, warn, error) |
+| LOG_FORMAT | text | Log format (text, json) |
+| DEFAULT_TIMEOUT | 30 | Default timeout in seconds for operations |
+
+### Helm Values
+When deploying with Helm, you can customize the configuration using values:
+
+```yaml
+# Enable the web UI
+config:
+  enableWebUI: true
+  webUIPort: 8080
+
+# Configure authentication
+auth:
+  enabled: true
+  username: admin
+  generatePassword: true
+
+# Enable Prometheus metrics
+monitoring:
+  enablePrometheus: true
+  metricsPort: 9090
+  createServiceMonitor: true
+  
+# Configure security
+security:
+  useRestrictedPermissions: true
+  podSecurityContext:
+    runAsNonRoot: true
+    runAsUser: 10001
+  containerSecurityContext:
+    privileged: false
+```
+
+See the [values.yaml](charts/k8stoolbox/values.yaml) file for all available configuration options.
 
 ## Using K8sToolbox Scripts
 
@@ -375,7 +526,18 @@ Below is a list of all available scripts, with detailed descriptions and example
     ```
     This command will test the network policies by attempting to connect from `pod-a` to `pod-b` in the `default` namespace.
 
-### Contributing
+## Security Considerations
+
+K8sToolbox is designed with security in mind, but it's important to properly configure it for your environment. Please review the [SECURITY_BEST_PRACTICES.md](SECURITY_BEST_PRACTICES.md) file for comprehensive security guidelines.
+
+Key security considerations:
+- Use least privilege RBAC permissions (default in Helm chart)
+- Run containers as non-root users (default in Helm chart)
+- Enable authentication for the web UI
+- Avoid mounting the host root filesystem unless necessary
+- Apply network policies to restrict pod communication
+
+## Contributing
 We welcome contributions! Please read the [CONTRIBUTING.md](CONTRIBUTING.md) file for guidelines on how to contribute to **K8sToolbox**.
 
 ### License
@@ -385,8 +547,10 @@ This project is licensed under the Apache License 2.0 - see the [LICENSE](LICENS
 K8sToolbox was inspired by various Kubernetes utility tools, including the **Swiss Army Knife** for DevOps. Special thanks to all contributors who helped improve this toolbox.
 
 ### Future Work
-- **Add more advanced diagnostics** tools.
-- **Integration with Prometheus** for enhanced monitoring capabilities.
+- **Enhanced AI integration** for automated diagnostics and remediation
+- **Extended platform integrations** for monitoring and observability
+- **Custom plugin system** for extending functionality
+- **Web terminal access** for direct command execution from the UI
 
 ## Inspiration
 K8sToolbox was inspired by the [swiss-army-knife](https://github.com/leodotcloud/swiss-army-knife) repository, which serves as a useful multi-purpose tool for DevOps. Our goal is to build upon that foundation and create a specialized, Kubernetes-focused toolkit that helps users effectively troubleshoot and manage their clusters.

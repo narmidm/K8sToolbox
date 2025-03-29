@@ -1,0 +1,111 @@
+# Default values for k8stoolbox.
+# This is a YAML-formatted file.
+
+# Deployment configuration
+deployment:
+  # Set to true to deploy as a DaemonSet (on all nodes), false for a single Pod
+  useDaemonSet: false
+  # Namespace to deploy the toolbox into
+  namespace: default
+  # Pod annotations
+  annotations: {}
+  # Pod labels
+  labels:
+    app: k8stoolbox
+
+# Image configuration
+image:
+  repository: narmidm/k8stoolbox
+  pullPolicy: IfNotPresent
+  # Overrides the image tag whose default is the chart appVersion
+  tag: "latest"
+  # Set to true to wait for the image to be present
+  waitForIt: false
+
+# Resource limits
+resources:
+  requests:
+    cpu: 100m
+    memory: 128Mi
+  limits:
+    cpu: 500m
+    memory: 512Mi
+
+# Security configuration (production hardened by default)
+security:
+  # Security context for the pod
+  podSecurityContext:
+    fsGroup: 10001
+    runAsUser: 10001
+    runAsGroup: 10001
+    runAsNonRoot: true
+  
+  # Security context for the container
+  containerSecurityContext:
+    privileged: false
+    allowPrivilegeEscalation: false
+    readOnlyRootFilesystem: true
+    capabilities:
+      drop:
+        - ALL
+      add:
+        - NET_ADMIN
+        - NET_RAW
+  
+  # Set to true to create ServiceAccount with appropriate permissions
+  createServiceAccount: true
+  # Set to false to use cluster-admin permissions (NOT RECOMMENDED)
+  useRestrictedPermissions: true
+
+# Additional volumes to mount
+volumes:
+  # Set to true to mount host root filesystem (NOT RECOMMENDED for production)
+  mountHostRoot: false
+  # Set to true to create a shared tmp volume
+  createTmpVolume: true
+  # Additional volumes to create/mount
+  additional: []
+  # - name: data-volume
+  #   emptyDir: {}
+
+# Configure basic auth for the toolbox web interface (if enabled)
+auth:
+  # Set to true to enable basic auth
+  enabled: false
+  # Username for basic auth
+  username: admin
+  # Generate a secure password and store it in a secret
+  # or specify your own password
+  password: ""
+  # Set to true to generate a random password and store it in a secret
+  generatePassword: true
+
+# Integration with observability platforms
+monitoring:
+  # Set to true to enable Prometheus metrics
+  enablePrometheus: false
+  # Port for Prometheus metrics
+  metricsPort: 9090
+  # Set to true to create ServiceMonitor for Prometheus
+  createServiceMonitor: false
+  # Grafana dashboard configuration
+  grafana:
+    # Set to true to install Grafana dashboard
+    installDashboard: false
+
+# Additional configuration options
+config:
+  # Set custom environment variables
+  env: []
+  # - name: LOG_LEVEL
+  #   value: "debug"
+  
+  # Auto recovery options
+  autoRecover:
+    enabled: false
+    interval: 300  # In seconds
+    namespaces: []
+    
+  # Set to true to enable the web UI
+  enableWebUI: false
+  webUIPort: 8080 

@@ -1,23 +1,81 @@
-# K8sToolbox Debug Pod Manifest with ServiceAccount
+# K8sToolbox Debug Pod Manifest with ServiceAccount and enhanced features
 apiVersion: v1
 kind: ServiceAccount
 metadata:
-  name: k8stoolbox-cluster-admin
+  name: k8stoolbox-sa
   namespace: default
+---
+# Custom role with least privilege principle
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: k8stoolbox-role
+rules:
+  # Core API resources needed for basic operations
+  - apiGroups: [""]
+    resources: ["pods", "pods/log", "pods/exec", "services", "endpoints", "namespaces", "nodes"]
+    verbs: ["get", "list", "watch"]
+  # Permissions needed for diagnostic operations 
+  - apiGroups: [""]
+    resources: ["pods"]
+    verbs: ["delete", "patch"]
+  # Permissions for deployment management
+  - apiGroups: ["apps"]
+    resources: ["deployments", "replicasets"]
+    verbs: ["get", "list", "watch", "patch"]
+  # Permissions for jobs
+  - apiGroups: ["batch"]
+    resources: ["jobs"]
+    verbs: ["get", "list", "delete"]
+  # Network policy access
+  - apiGroups: ["networking.k8s.io"]
+    resources: ["networkpolicies"]
+    verbs: ["get", "list"]
+  # Events for debugging
+  - apiGroups: [""]
+    resources: ["events"]
+    verbs: ["get", "list", "watch"]
 ---
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRoleBinding
 metadata:
-  name: k8stoolbox-cluster-admin-binding
+  name: k8stoolbox-binding
 roleRef:
   apiGroup: rbac.authorization.k8s.io
   kind: ClusterRole
-  name: cluster-admin
+  name: k8stoolbox-role
 subjects:
   - kind: ServiceAccount
-    name: k8stoolbox-cluster-admin
+    name: k8stoolbox-sa
     namespace: default
 ---
+# Web UI and Authentication Secret
+apiVersion: v1
+kind: Secret
+metadata:
+  name: k8stoolbox-auth
+  namespace: default
+type: Opaque
+data:
+  username: YWRtaW4=  # "admin" in base64
+  password: UGFzc3dvcmQxMjM=  # "Password123" in base64
+---
+# ConfigMap for K8sToolbox configuration
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: k8stoolbox-config
+  namespace: default
+data:
+  config.env: |
+    ENABLE_WEB_UI=true
+    WEB_UI_PORT=8080
+    ENABLE_PROMETHEUS=true
+    PROMETHEUS_PORT=9090
+    ENABLE_AUTH=true
+    LOG_LEVEL=info
+---
+# K8sToolbox Pod
 apiVersion: v1
 kind: Pod
 metadata:
@@ -25,27 +83,109 @@ metadata:
   namespace: default
   labels:
     app: k8stoolbox
+    version: latest
+  annotations:
+    prometheus.io/scrape: "true"
+    prometheus.io/port: "9090"
+    prometheus.io/path: "/metrics"
 spec:
-  serviceAccountName: k8stoolbox-cluster-admin
+  serviceAccountName: k8stoolbox-sa
   containers:
     - name: k8stoolbox
       image: narmidm/k8stoolbox:latest
       imagePullPolicy: IfNotPresent
-      command: ["tail", "-f", "/dev/null"]
+      command: ["k8stoolbox", "server"]
+      ports:
+        - name: http
+          containerPort: 8080
+          protocol: TCP
+        - name: metrics
+          containerPort: 9090
+          protocol: TCP
       resources:
         requests:
-          memory: "64Mi"
-          cpu: "50m"
+          memory: "128Mi"
+          cpu: "100m"
         limits:
-          memory: "256Mi"
+          memory: "512Mi"
           cpu: "500m"
       securityContext:
-        privileged: true
+        # Non-privileged mode
+        privileged: false
+        runAsNonRoot: true
+        runAsUser: 10001
+        allowPrivilegeEscalation: false
+        capabilities:
+          drop: ["ALL"]
+          add: ["NET_ADMIN", "NET_RAW"]  # Only add what's needed for network tools
+      # Mounting only needed paths, not entire root filesystem
       volumeMounts:
-        - name: host-root
-          mountPath: /host
+        - name: tmp-volume
+          mountPath: /tmp
+        - name: config-volume
+          mountPath: /etc/k8stoolbox
+      env:
+        - name: AUTH_USERNAME
+          valueFrom:
+            secretKeyRef:
+              name: k8stoolbox-auth
+              key: username
+        - name: AUTH_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: k8stoolbox-auth
+              key: password
+        - name: ENABLE_WEB_UI
+          value: "true"
+        - name: ENABLE_PROMETHEUS
+          value: "true"
   volumes:
-    - name: host-root
-      hostPath:
-        path: /
-        type: Directory
+    - name: tmp-volume
+      emptyDir: {}
+    - name: config-volume
+      configMap:
+        name: k8stoolbox
+---
+# Service for accessing the web UI 
+apiVersion: v1
+kind: Service
+metadata:
+  name: k8stoolbox
+  namespace: default
+  labels:
+    app: k8stoolbox
+spec:
+  selector:
+    app: k8stoolbox
+  ports:
+    - name: http
+      port: 8080
+      targetPort: 8080
+      protocol: TCP
+    - name: metrics
+      port: 9090
+      targetPort: 9090
+      protocol: TCP
+  type: ClusterIP
+---
+# ServiceMonitor for Prometheus integration
+# This will be used if you have Prometheus Operator installed
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: k8stoolbox
+  namespace: default
+  labels:
+    app: k8stoolbox
+    release: prometheus
+spec:
+  selector:
+    matchLabels:
+      app: k8stoolbox
+  endpoints:
+    - port: metrics
+      interval: 30s
+      path: /metrics
+  namespaceSelector:
+    matchNames:
+      - default

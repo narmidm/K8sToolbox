@@ -1,0 +1,80 @@
+Thank you for installing {{ .Chart.Name }} {{ .Chart.Version }}!
+
+K8sToolbox has been deployed as a {{ if .Values.deployment.useDaemonSet }}DaemonSet{{ else }}Pod{{ end }} in the {{ .Values.deployment.namespace }} namespace.
+
+{{- if .Values.deployment.useDaemonSet }}
+The toolbox is now running on all nodes in your cluster.
+{{- else }}
+The toolbox is now running as a standalone pod.
+{{- end }}
+
+===========================================
+ ACCESSING K8STOOLBOX
+===========================================
+
+To run commands inside the K8sToolbox pod, execute:
+
+  kubectl exec -it {{ include "k8stoolbox.fullname" . }} -n {{ .Values.deployment.namespace }} -- /bin/bash
+
+{{- if .Values.config.enableWebUI }}
+
+The K8sToolbox web interface is enabled and can be accessed by port-forwarding:
+
+  kubectl port-forward {{ include "k8stoolbox.fullname" . }} -n {{ .Values.deployment.namespace }} {{ .Values.config.webUIPort }}:{{ .Values.config.webUIPort }}
+
+Then open http://localhost:{{ .Values.config.webUIPort }} in your browser.
+
+{{- if .Values.auth.enabled }}
+Authentication is enabled. {{- if .Values.auth.generatePassword }}
+A secret has been created with login credentials.
+
+  Username: {{ .Values.auth.username }}
+  Password: (run the command below to retrieve)
+
+  kubectl get secret {{ include "k8stoolbox.fullname" . }}-auth -n {{ .Values.deployment.namespace }} -o jsonpath="{.data.password}" | base64 --decode
+{{- else }}
+Use the credentials provided in your values file.
+{{- end }}
+{{- end }}
+{{- end }}
+
+===========================================
+ AVAILABLE SCRIPTS
+===========================================
+
+K8sToolbox includes several useful scripts:
+
+  - healthcheck              : Performs health checks on pods and services
+  - connectivity_test        : Tests connectivity between pods
+  - network_diag             : Provides advanced network diagnostics
+  - resource_usage           : Monitors resource usage
+  - clean_stale_resources    : Cleans up stale resources
+  - backup_restore           : Backs up and restores resources
+  - delete_stuck_namespace   : Removes stuck namespaces
+  - aggregate_logs           : Aggregates logs from multiple pods
+
+===========================================
+ SECURITY NOTE
+===========================================
+
+{{- if not .Values.security.useRestrictedPermissions }}
+⚠️ WARNING: This deployment is using cluster-admin permissions.
+This is not recommended for production environments.
+Set security.useRestrictedPermissions=true for a more secure configuration.
+{{- else }}
+This deployment is using restricted permissions according to the principle of least privilege.
+{{- end }}
+
+{{- if .Values.volumes.mountHostRoot }}
+⚠️ WARNING: This deployment has the host root filesystem mounted.
+This is not recommended for production environments.
+Set volumes.mountHostRoot=false for a more secure configuration.
+{{- end }}
+
+{{- if .Values.security.containerSecurityContext.privileged }}
+⚠️ WARNING: This deployment is running in privileged mode.
+This is not recommended for production environments.
+Modify security.containerSecurityContext for a more secure configuration.
+{{- end }}
+
+For more information, visit: https://github.com/narmidm/K8sToolbox 

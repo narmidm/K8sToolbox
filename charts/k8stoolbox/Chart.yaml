@@ -1,0 +1,19 @@
+apiVersion: v2
+name: k8stoolbox
+description: A Helm chart for deploying K8sToolbox - Kubernetes debugging and management toolkit
+type: application
+version: 0.1.0
+appVersion: "0.1.0"
+keywords:
+  - kubernetes
+  - debugging
+  - management
+  - utilities
+  - diagnostics
+home: https://github.com/narmidm/K8sToolbox
+sources:
+  - https://github.com/narmidm/K8sToolbox
+maintainers:
+  - name: narmidm
+    email: narmidm@example.com
+icon: https://raw.githubusercontent.com/narmidm/K8sToolbox/master/assets/logo.png 

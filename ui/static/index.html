@@ -1,0 +1,570 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>K8sToolbox - Kubernetes Management Toolkit</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.8.1/font/bootstrap-icons.css">
+    <style>
+        .sidebar {
+            position: fixed;
+            top: 0;
+            bottom: 0;
+            left: 0;
+            z-index: 100;
+            padding: 48px 0 0;
+            box-shadow: inset -1px 0 0 rgba(0, 0, 0, .1);
+        }
+        
+        .sidebar-sticky {
+            position: relative;
+            top: 0;
+            height: calc(100vh - 48px);
+            padding-top: .5rem;
+            overflow-x: hidden;
+            overflow-y: auto;
+        }
+        
+        .nav-link {
+            font-weight: 500;
+            color: #333;
+        }
+        
+        .nav-link.active {
+            color: #2470dc;
+        }
+        
+        .navbar-brand {
+            padding-top: .75rem;
+            padding-bottom: .75rem;
+            font-size: 1rem;
+            background-color: rgba(0, 0, 0, .25);
+            box-shadow: inset -1px 0 0 rgba(0, 0, 0, .25);
+        }
+        
+        .navbar .navbar-toggler {
+            top: .25rem;
+            right: 1rem;
+        }
+        
+        .status-healthy {
+            color: #198754;
+        }
+        
+        .status-warning {
+            color: #fd7e14;
+        }
+        
+        .status-error {
+            color: #dc3545;
+        }
+        
+        .main-content {
+            margin-top: 56px;
+            padding: 20px;
+        }
+        
+        #loading {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(255, 255, 255, 0.8);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 9999;
+        }
+        
+        .card {
+            margin-bottom: 20px;
+        }
+    </style>
+</head>
+<body>
+    <div id="loading">
+        <div class="spinner-border text-primary" role="status">
+            <span class="visually-hidden">Loading...</span>
+        </div>
+    </div>
+
+    <header class="navbar navbar-dark sticky-top bg-dark flex-md-nowrap p-0 shadow">
+        <a class="navbar-brand col-md-3 col-lg-2 me-0 px-3" href="#">K8sToolbox</a>
+        <button class="navbar-toggler position-absolute d-md-none collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#sidebarMenu" aria-controls="sidebarMenu" aria-expanded="false" aria-label="Toggle navigation">
+            <span class="navbar-toggler-icon"></span>
+        </button>
+        <div class="navbar-nav">
+            <div class="nav-item text-nowrap">
+                <span class="nav-link px-3" id="version-info">v0.1.0</span>
+            </div>
+        </div>
+    </header>
+
+    <div class="container-fluid">
+        <div class="row">
+            <nav id="sidebarMenu" class="col-md-3 col-lg-2 d-md-block bg-light sidebar collapse">
+                <div class="position-sticky pt-3">
+                    <ul class="nav flex-column">
+                        <li class="nav-item">
+                            <a class="nav-link active" id="nav-dashboard" href="#dashboard">
+                                <i class="bi bi-speedometer2"></i> Dashboard
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" id="nav-pods" href="#pods">
+                                <i class="bi bi-boxes"></i> Pods
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" id="nav-services" href="#services">
+                                <i class="bi bi-diagram-3"></i> Services
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" id="nav-nodes" href="#nodes">
+                                <i class="bi bi-hdd-rack"></i> Nodes
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" id="nav-diagnostics" href="#diagnostics">
+                                <i class="bi bi-activity"></i> Diagnostics
+                            </a>
+                        </li>
+                    </ul>
+                    
+                    <h6 class="sidebar-heading d-flex justify-content-between align-items-center px-3 mt-4 mb-1 text-muted">
+                        <span>Tools</span>
+                    </h6>
+                    <ul class="nav flex-column mb-2">
+                        <li class="nav-item">
+                            <a class="nav-link" id="nav-health-check" href="#health-check">
+                                <i class="bi bi-heart-pulse"></i> Health Check
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" id="nav-connectivity" href="#connectivity">
+                                <i class="bi bi-reception-4"></i> Connectivity
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" id="nav-resources" href="#resources">
+                                <i class="bi bi-cpu"></i> Resources
+                            </a>
+                        </li>
+                    </ul>
+                </div>
+            </nav>
+
+            <main class="col-md-9 ms-sm-auto col-lg-10 px-md-4 main-content">
+                <div id="dashboard-section" class="section">
+                    <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+                        <h1 class="h2">Dashboard</h1>
+                        <div class="btn-toolbar mb-2 mb-md-0">
+                            <div class="btn-group me-2">
+                                <button type="button" class="btn btn-sm btn-outline-secondary" id="refresh-dashboard">
+                                    <i class="bi bi-arrow-repeat"></i> Refresh
+                                </button>
+                            </div>
+                            <select class="form-select form-select-sm" id="namespace-selector">
+                                <option value="default">default</option>
+                            </select>
+                        </div>
+                    </div>
+                    
+                    <div class="row">
+                        <div class="col-md-4">
+                            <div class="card">
+                                <div class="card-body">
+                                    <h5 class="card-title">Pods</h5>
+                                    <div class="d-flex align-items-center">
+                                        <i class="bi bi-boxes fs-1 me-3"></i>
+                                        <div>
+                                            <h2 id="pod-count">0</h2>
+                                            <div id="pod-status">
+                                                <span class="status-healthy"><i class="bi bi-check-circle"></i> <span id="healthy-pods">0</span> Healthy</span>
+                                                <span class="ms-2 status-error"><i class="bi bi-x-circle"></i> <span id="unhealthy-pods">0</span> Issues</span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="card">
+                                <div class="card-body">
+                                    <h5 class="card-title">Services</h5>
+                                    <div class="d-flex align-items-center">
+                                        <i class="bi bi-diagram-3 fs-1 me-3"></i>
+                                        <div>
+                                            <h2 id="service-count">0</h2>
+                                            <div id="service-status">
+                                                <span class="status-healthy"><i class="bi bi-check-circle"></i> <span id="active-services">0</span> Active</span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="card">
+                                <div class="card-body">
+                                    <h5 class="card-title">Nodes</h5>
+                                    <div class="d-flex align-items-center">
+                                        <i class="bi bi-hdd-rack fs-1 me-3"></i>
+                                        <div>
+                                            <h2 id="node-count">0</h2>
+                                            <div id="node-status">
+                                                <span class="status-healthy"><i class="bi bi-check-circle"></i> <span id="ready-nodes">0</span> Ready</span>
+                                                <span class="ms-2 status-error"><i class="bi bi-x-circle"></i> <span id="not-ready-nodes">0</span> Not Ready</span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="card mt-4">
+                        <div class="card-header">
+                            Recent Health Checks
+                        </div>
+                        <div class="card-body">
+                            <div class="table-responsive">
+                                <table class="table table-striped">
+                                    <thead>
+                                        <tr>
+                                            <th>Timestamp</th>
+                                            <th>Namespace</th>
+                                            <th>Status</th>
+                                            <th>Details</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="health-check-history">
+                                        <tr>
+                                            <td colspan="4" class="text-center">No health checks performed yet</td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div id="pods-section" class="section d-none">
+                    <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+                        <h1 class="h2">Pods</h1>
+                        <div class="btn-toolbar mb-2 mb-md-0">
+                            <div class="btn-group me-2">
+                                <button type="button" class="btn btn-sm btn-outline-secondary" id="refresh-pods">
+                                    <i class="bi bi-arrow-repeat"></i> Refresh
+                                </button>
+                            </div>
+                            <select class="form-select form-select-sm" id="pods-namespace-selector">
+                                <option value="default">default</option>
+                            </select>
+                        </div>
+                    </div>
+                    
+                    <div class="table-responsive">
+                        <table class="table table-striped">
+                            <thead>
+                                <tr>
+                                    <th>Name</th>
+                                    <th>Status</th>
+                                    <th>Ready</th>
+                                    <th>Labels</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="pods-table">
+                                <tr>
+                                    <td colspan="5" class="text-center">Loading pods...</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+                
+                <!-- Other sections would be similar but with different content -->
+                <div id="services-section" class="section d-none">
+                    <h1 class="h2">Services</h1>
+                    <p>Service information would be displayed here.</p>
+                </div>
+                
+                <div id="nodes-section" class="section d-none">
+                    <h1 class="h2">Nodes</h1>
+                    <p>Node information would be displayed here.</p>
+                </div>
+                
+                <div id="diagnostics-section" class="section d-none">
+                    <h1 class="h2">Diagnostics</h1>
+                    <p>Diagnostic tools would be displayed here.</p>
+                </div>
+                
+                <div id="health-check-section" class="section d-none">
+                    <h1 class="h2">Health Check</h1>
+                    <p>Health check tools would be displayed here.</p>
+                </div>
+                
+                <div id="connectivity-section" class="section d-none">
+                    <h1 class="h2">Connectivity</h1>
+                    <p>Connectivity test tools would be displayed here.</p>
+                </div>
+                
+                <div id="resources-section" class="section d-none">
+                    <h1 class="h2">Resources</h1>
+                    <p>Resource management tools would be displayed here.</p>
+                </div>
+            </main>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        // Base API URL
+        const API_BASE_URL = '/api/v1';
+        
+        // DOM elements
+        const loadingElement = document.getElementById('loading');
+        const versionInfoElement = document.getElementById('version-info');
+        const namespaceSelectorElement = document.getElementById('namespace-selector');
+        const podsNamespaceSelectorElement = document.getElementById('pods-namespace-selector');
+        const refreshDashboardButton = document.getElementById('refresh-dashboard');
+        const refreshPodsButton = document.getElementById('refresh-pods');
+        
+        // Initialize app
+        document.addEventListener('DOMContentLoaded', () => {
+            fetchHealth();
+            fetchNamespaces();
+            setupNavigation();
+            refreshDashboard();
+            
+            // Set up event listeners
+            refreshDashboardButton.addEventListener('click', refreshDashboard);
+            refreshPodsButton.addEventListener('click', () => {
+                fetchPods(podsNamespaceSelectorElement.value);
+            });
+            
+            namespaceSelectorElement.addEventListener('change', refreshDashboard);
+            podsNamespaceSelectorElement.addEventListener('change', () => {
+                fetchPods(podsNamespaceSelectorElement.value);
+            });
+            
+            // Hide loading screen
+            setTimeout(() => {
+                loadingElement.style.display = 'none';
+            }, 500);
+        });
+        
+        // Setup navigation
+        function setupNavigation() {
+            const navLinks = document.querySelectorAll('.nav-link');
+            const sections = document.querySelectorAll('.section');
+            
+            navLinks.forEach(link => {
+                link.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    
+                    // Remove active class from all links
+                    navLinks.forEach(l => l.classList.remove('active'));
+                    
+                    // Add active class to clicked link
+                    link.classList.add('active');
+                    
+                    // Hide all sections
+                    sections.forEach(section => section.classList.add('d-none'));
+                    
+                    // Show selected section
+                    const targetId = link.getAttribute('href').replace('#', '');
+                    const targetSection = document.getElementById(`${targetId}-section`);
+                    if (targetSection) {
+                        targetSection.classList.remove('d-none');
+                    }
+                    
+                    // Special handling for some sections
+                    if (targetId === 'pods') {
+                        fetchPods(podsNamespaceSelectorElement.value);
+                    }
+                });
+            });
+        }
+        
+        // Fetch health information
+        async function fetchHealth() {
+            try {
+                const response = await fetch(`${API_BASE_URL}/health`);
+                const data = await response.json();
+                
+                if (data.success) {
+                    versionInfoElement.textContent = `v${data.data.version}`;
+                }
+            } catch (error) {
+                console.error('Error fetching health info:', error);
+            }
+        }
+        
+        // Fetch namespaces
+        async function fetchNamespaces() {
+            try {
+                const response = await fetch(`${API_BASE_URL}/namespaces`);
+                const data = await response.json();
+                
+                if (data.success && Array.isArray(data.data)) {
+                    // Clear existing options
+                    namespaceSelectorElement.innerHTML = '';
+                    podsNamespaceSelectorElement.innerHTML = '';
+                    
+                    // Add options for each namespace
+                    data.data.forEach(namespace => {
+                        const option = document.createElement('option');
+                        option.value = namespace;
+                        option.textContent = namespace;
+                        
+                        const optionClone = option.cloneNode(true);
+                        
+                        namespaceSelectorElement.appendChild(option);
+                        podsNamespaceSelectorElement.appendChild(optionClone);
+                    });
+                }
+            } catch (error) {
+                console.error('Error fetching namespaces:', error);
+            }
+        }
+        
+        // Refresh dashboard data
+        function refreshDashboard() {
+            const namespace = namespaceSelectorElement.value;
+            
+            // Fetch pods, services, and nodes
+            fetchDashboardCounts(namespace);
+        }
+        
+        // Fetch dashboard counts
+        async function fetchDashboardCounts(namespace) {
+            try {
+                // Fetch pods
+                const podsResponse = await fetch(`${API_BASE_URL}/pods?namespace=${namespace}`);
+                const podsData = await podsResponse.json();
+                
+                // Fetch services
+                const servicesResponse = await fetch(`${API_BASE_URL}/services?namespace=${namespace}`);
+                const servicesData = await servicesResponse.json();
+                
+                // Fetch nodes
+                const nodesResponse = await fetch(`${API_BASE_URL}/nodes`);
+                const nodesData = await nodesResponse.json();
+                
+                // Update pod counts
+                if (podsData.success && Array.isArray(podsData.data)) {
+                    const podCount = podsData.data.length;
+                    const healthyPods = podsData.data.filter(pod => pod.status === 'Running' && pod.ready).length;
+                    const unhealthyPods = podCount - healthyPods;
+                    
+                    document.getElementById('pod-count').textContent = podCount;
+                    document.getElementById('healthy-pods').textContent = healthyPods;
+                    document.getElementById('unhealthy-pods').textContent = unhealthyPods;
+                }
+                
+                // Update service counts
+                if (servicesData.success && Array.isArray(servicesData.data)) {
+                    const serviceCount = servicesData.data.length;
+                    
+                    document.getElementById('service-count').textContent = serviceCount;
+                    document.getElementById('active-services').textContent = serviceCount;
+                }
+                
+                // Update node counts
+                if (nodesData.success && Array.isArray(nodesData.data)) {
+                    const nodeCount = nodesData.data.length;
+                    const readyNodes = nodesData.data.filter(node => node.status === 'Ready').length;
+                    const notReadyNodes = nodeCount - readyNodes;
+                    
+                    document.getElementById('node-count').textContent = nodeCount;
+                    document.getElementById('ready-nodes').textContent = readyNodes;
+                    document.getElementById('not-ready-nodes').textContent = notReadyNodes;
+                }
+            } catch (error) {
+                console.error('Error fetching dashboard data:', error);
+            }
+        }
+        
+        // Fetch pods
+        async function fetchPods(namespace) {
+            try {
+                const response = await fetch(`${API_BASE_URL}/pods?namespace=${namespace}`);
+                const data = await response.json();
+                
+                if (data.success && Array.isArray(data.data)) {
+                    // Get the table body
+                    const tableBody = document.getElementById('pods-table');
+                    
+                    // Clear existing rows
+                    tableBody.innerHTML = '';
+                    
+                    // Add row for each pod
+                    data.data.forEach(pod => {
+                        const row = document.createElement('tr');
+                        
+                        // Create status class
+                        let statusClass = 'text-secondary';
+                        if (pod.status === 'Running' && pod.ready) {
+                            statusClass = 'status-healthy';
+                        } else if (pod.status === 'Running' && !pod.ready) {
+                            statusClass = 'status-warning';
+                        } else if (['Failed', 'Unknown', 'Pending'].includes(pod.status)) {
+                            statusClass = 'status-error';
+                        }
+                        
+                        // Format labels
+                        const labelElements = [];
+                        for (const key in pod.labels) {
+                            labelElements.push(`<span class="badge bg-light text-dark">${key}: ${pod.labels[key]}</span>`);
+                        }
+                        
+                        // Set row content
+                        row.innerHTML = `
+                            <td>${pod.name}</td>
+                            <td><span class="${statusClass}">${pod.status}</span></td>
+                            <td>${pod.ready ? '<i class="bi bi-check-circle status-healthy"></i>' : '<i class="bi bi-x-circle status-error"></i>'}</td>
+                            <td>${labelElements.join(' ')}</td>
+                            <td>
+                                <button class="btn btn-sm btn-outline-primary view-logs" data-pod="${pod.name}">Logs</button>
+                                <button class="btn btn-sm btn-outline-secondary view-details" data-pod="${pod.name}">Details</button>
+                            </td>
+                        `;
+                        
+                        tableBody.appendChild(row);
+                    });
+                    
+                    // Add event listeners to buttons
+                    document.querySelectorAll('.view-logs').forEach(button => {
+                        button.addEventListener('click', () => {
+                            const podName = button.getAttribute('data-pod');
+                            alert(`Viewing logs for pod: ${podName}`);
+                            // In a real app, this would fetch and display logs
+                        });
+                    });
+                    
+                    document.querySelectorAll('.view-details').forEach(button => {
+                        button.addEventListener('click', () => {
+                            const podName = button.getAttribute('data-pod');
+                            alert(`Viewing details for pod: ${podName}`);
+                            // In a real app, this would fetch and display pod details
+                        });
+                    });
+                } else {
+                    // Display an error message
+                    const tableBody = document.getElementById('pods-table');
+                    tableBody.innerHTML = `<tr><td colspan="5" class="text-center">Error loading pods: ${data.error || 'Unknown error'}</td></tr>`;
+                }
+            } catch (error) {
+                console.error('Error fetching pods:', error);
+                const tableBody = document.getElementById('pods-table');
+                tableBody.innerHTML = `<tr><td colspan="5" class="text-center">Error loading pods: ${error.message}</td></tr>`;
+            }
+        }
+    </script>
+</body>
+</html> 
