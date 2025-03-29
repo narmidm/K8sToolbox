@@ -1,0 +1,75 @@
+{{- if .Values.security.createServiceAccount }}
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: {{ include "k8stoolbox.serviceAccountName" . }}
+  namespace: {{ .Values.deployment.namespace }}
+  labels:
+    {{- include "k8stoolbox.labels" . | nindent 4 }}
+---
+{{- if .Values.security.useRestrictedPermissions }}
+# Restricted role with least privilege principle
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: {{ include "k8stoolbox.serviceAccountName" . }}-role
+  labels:
+    {{- include "k8stoolbox.labels" . | nindent 4 }}
+rules:
+  # Core API resources needed for basic operations
+  - apiGroups: [""]
+    resources: ["pods", "pods/log", "pods/exec", "services", "endpoints", "namespaces", "nodes"]
+    verbs: ["get", "list", "watch"]
+  # Permissions needed for diagnostic operations 
+  - apiGroups: [""]
+    resources: ["pods"]
+    verbs: ["delete", "patch"]
+  # Permissions for deployment management
+  - apiGroups: ["apps"]
+    resources: ["deployments", "replicasets"]
+    verbs: ["get", "list", "watch", "patch"]
+  # Permissions for jobs
+  - apiGroups: ["batch"]
+    resources: ["jobs"]
+    verbs: ["get", "list", "delete"]
+  # Network policy access
+  - apiGroups: ["networking.k8s.io"]
+    resources: ["networkpolicies"]
+    verbs: ["get", "list"]
+  # Events for debugging
+  - apiGroups: [""]
+    resources: ["events"]
+    verbs: ["get", "list", "watch"]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: {{ include "k8stoolbox.serviceAccountName" . }}-binding
+  labels:
+    {{- include "k8stoolbox.labels" . | nindent 4 }}
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: {{ include "k8stoolbox.serviceAccountName" . }}-role
+subjects:
+  - kind: ServiceAccount
+    name: {{ include "k8stoolbox.serviceAccountName" . }}
+    namespace: {{ .Values.deployment.namespace }}
+{{- else }}
+# WARNING: This grants cluster-admin privileges - not recommended for production
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: {{ include "k8stoolbox.serviceAccountName" . }}-admin-binding
+  labels:
+    {{- include "k8stoolbox.labels" . | nindent 4 }}
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: cluster-admin
+subjects:
+  - kind: ServiceAccount
+    name: {{ include "k8stoolbox.serviceAccountName" . }}
+    namespace: {{ .Values.deployment.namespace }}
+{{- end }}
+{{- end }} 

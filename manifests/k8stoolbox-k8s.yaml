@@ -1,0 +1,54 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: k8stoolbox
+  labels:
+    app: k8stoolbox
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: k8stoolbox
+  template:
+    metadata:
+      labels:
+        app: k8stoolbox
+    spec:
+      containers:
+      - name: k8stoolbox
+        image: k8stoolbox:latest
+        imagePullPolicy: Never
+        command: ["/usr/local/bin/k8stoolbox"]
+        args: ["server"]
+        env:
+        - name: ENABLE_WEB_UI
+          value: "true"
+        - name: ENABLE_PROMETHEUS
+          value: "true"
+        - name: STANDALONE_MODE 
+          value: "true"
+        - name: AUTH_USERNAME
+          value: "admin"
+        - name: AUTH_PASSWORD
+          value: "password123"
+        ports:
+        - containerPort: 8080
+          name: http
+        - containerPort: 9090
+          name: prometheus
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: k8stoolbox
+spec:
+  selector:
+    app: k8stoolbox
+  ports:
+  - name: http
+    port: 8080
+    targetPort: 8080
+  - name: prometheus
+    port: 9090
+    targetPort: 9090
+  type: NodePort 
