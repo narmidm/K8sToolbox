@@ -122,6 +122,9 @@ var config2 = Configuration{
 	DefaultTimeout:   time.Duration(getIntEnv("DEFAULT_TIMEOUT", 30)) * time.Second,
 }
 
+// StandaloneMode allows running without Kubernetes
+var StandaloneMode = getBoolEnv("STANDALONE_MODE", false)
+
 func init() {
 	// Initialize logger
 	logger = log.New(os.Stdout, "[K8sToolbox] ", log.LstdFlags|log.Lshortfile)
@@ -150,8 +153,12 @@ func main() {
 	}()
 
 	// Initialize Kubernetes client
-	if err := initKubernetesClient(); err != nil {
-		logger.Fatalf("Failed to initialize Kubernetes client: %v", err)
+	if !StandaloneMode {
+		if err := initKubernetesClient(); err != nil {
+			logger.Fatalf("Failed to initialize Kubernetes client: %v", err)
+		}
+	} else {
+		logger.Println("Running in standalone mode - Kubernetes client not initialized")
 	}
 
 	// Start web server if enabled
@@ -386,21 +393,28 @@ func healthHandler(w http.ResponseWriter, r *http.Request) {
 			"buildTime":  BuildTime,
 			"commitHash": Commit,
 			"status":     "healthy",
+			"mode":       conditionalString(StandaloneMode, "standalone", "kubernetes"),
 		},
 	}
 	json.NewEncoder(w).Encode(response)
 }
 
 func namespacesHandler(w http.ResponseWriter, r *http.Request) {
-	namespaces, err := clientset.CoreV1().Namespaces().List(context.Background(), metav1.ListOptions{})
-	if err != nil {
-		errorResponse(w, err.Error(), http.StatusInternalServerError)
-		return
-	}
-
 	var namespaceNames []string
-	for _, ns := range namespaces.Items {
-		namespaceNames = append(namespaceNames, ns.Name)
+
+	if StandaloneMode {
+		// In standalone mode, return some dummy namespaces
+		namespaceNames = []string{"default", "kube-system", "demo"}
+	} else {
+		namespaces, err := clientset.CoreV1().Namespaces().List(context.Background(), metav1.ListOptions{})
+		if err != nil {
+			errorResponse(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
+
+		for _, ns := range namespaces.Items {
+			namespaceNames = append(namespaceNames, ns.Name)
+		}
 	}
 
 	response := APIResponse{
@@ -417,13 +431,7 @@ func podsHandler(w http.ResponseWriter, r *http.Request) {
 		namespace = "default"
 	}
 
-	pods, err := clientset.CoreV1().Pods(namespace).List(context.Background(), metav1.ListOptions{})
-	if err != nil {
-		errorResponse(w, err.Error(), http.StatusInternalServerError)
-		return
-	}
-
-	// Convert to a simpler format for the API
+	// Define the PodInfo type here for clarity
 	type PodInfo struct {
 		Name      string            `json:"name"`
 		Namespace string            `json:"namespace"`
@@ -433,22 +441,65 @@ func podsHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	var podInfos []PodInfo
-	for _, pod := range pods.Items {
-		ready := true
-		for _, cs := range pod.Status.ContainerStatuses {
-			if !cs.Ready {
-				ready = false
-				break
-			}
+
+	if StandaloneMode {
+		// In standalone mode, return some dummy pods
+		podInfos = []PodInfo{
+			{
+				Name:      "example-pod-1",
+				Namespace: namespace,
+				Status:    "Running",
+				Ready:     true,
+				Labels: map[string]string{
+					"app":  "example",
+					"tier": "frontend",
+				},
+			},
+			{
+				Name:      "example-pod-2",
+				Namespace: namespace,
+				Status:    "Running",
+				Ready:     true,
+				Labels: map[string]string{
+					"app":  "example",
+					"tier": "backend",
+				},
+			},
+			{
+				Name:      "example-pod-3",
+				Namespace: namespace,
+				Status:    "Pending",
+				Ready:     false,
+				Labels: map[string]string{
+					"app":  "example",
+					"tier": "database",
+				},
+			},
+		}
+	} else {
+		pods, err := clientset.CoreV1().Pods(namespace).List(context.Background(), metav1.ListOptions{})
+		if err != nil {
+			errorResponse(w, err.Error(), http.StatusInternalServerError)
+			return
 		}
 
-		podInfos = append(podInfos, PodInfo{
-			Name:      pod.Name,
-			Namespace: pod.Namespace,
-			Status:    string(pod.Status.Phase),
-			Ready:     ready,
-			Labels:    pod.Labels,
-		})
+		for _, pod := range pods.Items {
+			ready := true
+			for _, cs := range pod.Status.ContainerStatuses {
+				if !cs.Ready {
+					ready = false
+					break
+				}
+			}
+
+			podInfos = append(podInfos, PodInfo{
+				Name:      pod.Name,
+				Namespace: pod.Namespace,
+				Status:    string(pod.Status.Phase),
+				Ready:     ready,
+				Labels:    pod.Labels,
+			})
+		}
 	}
 
 	response := APIResponse{
@@ -465,13 +516,7 @@ func servicesHandler(w http.ResponseWriter, r *http.Request) {
 		namespace = "default"
 	}
 
-	services, err := clientset.CoreV1().Services(namespace).List(context.Background(), metav1.ListOptions{})
-	if err != nil {
-		errorResponse(w, err.Error(), http.StatusInternalServerError)
-		return
-	}
-
-	// Convert to a simpler format for the API
+	// Define the ServiceInfo type here for clarity
 	type ServiceInfo struct {
 		Name       string            `json:"name"`
 		Namespace  string            `json:"namespace"`
@@ -483,21 +528,67 @@ func servicesHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	var serviceInfos []ServiceInfo
-	for _, svc := range services.Items {
-		var ports []string
-		for _, port := range svc.Spec.Ports {
-			ports = append(ports, fmt.Sprintf("%d/%s", port.Port, port.Protocol))
+
+	if StandaloneMode {
+		// In standalone mode, return some dummy services
+		serviceInfos = []ServiceInfo{
+			{
+				Name:      "example-service-1",
+				Namespace: namespace,
+				Type:      "ClusterIP",
+				ClusterIP: "10.96.0.10",
+				Ports:     []string{"80/TCP", "443/TCP"},
+				Labels: map[string]string{
+					"app":  "example",
+					"tier": "frontend",
+				},
+			},
+			{
+				Name:       "example-service-2",
+				Namespace:  namespace,
+				Type:       "LoadBalancer",
+				ClusterIP:  "10.96.0.11",
+				ExternalIP: []string{"192.168.1.100"},
+				Ports:      []string{"8080/TCP"},
+				Labels: map[string]string{
+					"app":  "example",
+					"tier": "backend",
+				},
+			},
+		}
+	} else {
+		services, err := clientset.CoreV1().Services(namespace).List(context.Background(), metav1.ListOptions{})
+		if err != nil {
+			errorResponse(w, err.Error(), http.StatusInternalServerError)
+			return
 		}
 
-		serviceInfos = append(serviceInfos, ServiceInfo{
-			Name:       svc.Name,
-			Namespace:  svc.Namespace,
-			Type:       string(svc.Spec.Type),
-			ClusterIP:  svc.Spec.ClusterIP,
-			ExternalIP: svc.Status.LoadBalancer.Ingress[0].IP,
-			Ports:      ports,
-			Labels:     svc.Labels,
-		})
+		for _, svc := range services.Items {
+			var ports []string
+			for _, port := range svc.Spec.Ports {
+				ports = append(ports, fmt.Sprintf("%d/%s", port.Port, port.Protocol))
+			}
+
+			// Safely handle external IPs
+			var externalIPs []string
+			if len(svc.Status.LoadBalancer.Ingress) > 0 {
+				for _, ingress := range svc.Status.LoadBalancer.Ingress {
+					if ingress.IP != "" {
+						externalIPs = append(externalIPs, ingress.IP)
+					}
+				}
+			}
+
+			serviceInfos = append(serviceInfos, ServiceInfo{
+				Name:       svc.Name,
+				Namespace:  svc.Namespace,
+				Type:       string(svc.Spec.Type),
+				ClusterIP:  svc.Spec.ClusterIP,
+				ExternalIP: externalIPs,
+				Ports:      ports,
+				Labels:     svc.Labels,
+			})
+		}
 	}
 
 	response := APIResponse{
@@ -509,13 +600,7 @@ func servicesHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func nodesHandler(w http.ResponseWriter, r *http.Request) {
-	nodes, err := clientset.CoreV1().Nodes().List(context.Background(), metav1.ListOptions{})
-	if err != nil {
-		errorResponse(w, err.Error(), http.StatusInternalServerError)
-		return
-	}
-
-	// Convert to a simpler format for the API
+	// Define the NodeInfo type here for clarity
 	type NodeInfo struct {
 		Name             string            `json:"name"`
 		Status           string            `json:"status"`
@@ -528,36 +613,75 @@ func nodesHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	var nodeInfos []NodeInfo
-	for _, node := range nodes.Items {
-		// Determine node status
-		status := "Unknown"
-		for _, cond := range node.Status.Conditions {
-			if cond.Type == "Ready" {
-				if cond.Status == "True" {
-					status = "Ready"
-				} else {
-					status = "NotReady"
+
+	if StandaloneMode {
+		// In standalone mode, return some dummy nodes
+		nodeInfos = []NodeInfo{
+			{
+				Name:             "example-node-1",
+				Status:           "Ready",
+				Addresses:        []string{"InternalIP: 192.168.1.10", "Hostname: example-node-1"},
+				KubeletVersion:   "v1.28.3",
+				KernelVersion:    "5.15.0-86-generic",
+				OSImage:          "Ubuntu 22.04.3 LTS",
+				ContainerRuntime: "containerd://1.7.4",
+				Labels: map[string]string{
+					"kubernetes.io/hostname":                "example-node-1",
+					"node-role.kubernetes.io/control-plane": "",
+				},
+			},
+			{
+				Name:             "example-node-2",
+				Status:           "Ready",
+				Addresses:        []string{"InternalIP: 192.168.1.11", "Hostname: example-node-2"},
+				KubeletVersion:   "v1.28.3",
+				KernelVersion:    "5.15.0-86-generic",
+				OSImage:          "Ubuntu 22.04.3 LTS",
+				ContainerRuntime: "containerd://1.7.4",
+				Labels: map[string]string{
+					"kubernetes.io/hostname":         "example-node-2",
+					"node-role.kubernetes.io/worker": "",
+				},
+			},
+		}
+	} else {
+		nodes, err := clientset.CoreV1().Nodes().List(context.Background(), metav1.ListOptions{})
+		if err != nil {
+			errorResponse(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
+
+		for _, node := range nodes.Items {
+			// Determine node status
+			status := "Unknown"
+			for _, cond := range node.Status.Conditions {
+				if cond.Type == "Ready" {
+					if cond.Status == "True" {
+						status = "Ready"
+					} else {
+						status = "NotReady"
+					}
+					break
 				}
-				break
 			}
-		}
 
-		// Collect addresses
-		var addresses []string
-		for _, addr := range node.Status.Addresses {
-			addresses = append(addresses, fmt.Sprintf("%s: %s", addr.Type, addr.Address))
-		}
+			// Collect addresses
+			var addresses []string
+			for _, addr := range node.Status.Addresses {
+				addresses = append(addresses, fmt.Sprintf("%s: %s", addr.Type, addr.Address))
+			}
 
-		nodeInfos = append(nodeInfos, NodeInfo{
-			Name:             node.Name,
-			Status:           status,
-			Addresses:        addresses,
-			KubeletVersion:   node.Status.NodeInfo.KubeletVersion,
-			KernelVersion:    node.Status.NodeInfo.KernelVersion,
-			OSImage:          node.Status.NodeInfo.OSImage,
-			ContainerRuntime: node.Status.NodeInfo.ContainerRuntimeVersion,
-			Labels:           node.Labels,
-		})
+			nodeInfos = append(nodeInfos, NodeInfo{
+				Name:             node.Name,
+				Status:           status,
+				Addresses:        addresses,
+				KubeletVersion:   node.Status.NodeInfo.KubeletVersion,
+				KernelVersion:    node.Status.NodeInfo.KernelVersion,
+				OSImage:          node.Status.NodeInfo.OSImage,
+				ContainerRuntime: node.Status.NodeInfo.ContainerRuntimeVersion,
+				Labels:           node.Labels,
+			})
+		}
 	}
 
 	response := APIResponse{
@@ -877,16 +1001,14 @@ func checkResourceUsage(ctx context.Context, namespace string, threshold int) {
 				if cpu, ok := container.Resources.Requests["cpu"]; ok {
 					cpuReq = cpu.String()
 					// Update Prometheus metrics
-					if cpuValue, err := cpu.AsApproximateFloat64(); err == nil {
-						resourceUsage.WithLabelValues(namespace, pod.Name, "cpu_request").Set(cpuValue)
-					}
+					cpuValue := cpu.AsApproximateFloat64()
+					resourceUsage.WithLabelValues(namespace, pod.Name, "cpu_request").Set(cpuValue)
 				}
 				if mem, ok := container.Resources.Requests["memory"]; ok {
 					memReq = mem.String()
 					// Update Prometheus metrics
-					if memValue, err := mem.AsApproximateFloat64(); err == nil {
-						resourceUsage.WithLabelValues(namespace, pod.Name, "memory_request").Set(memValue)
-					}
+					memValue := mem.AsApproximateFloat64()
+					resourceUsage.WithLabelValues(namespace, pod.Name, "memory_request").Set(memValue)
 				}
 			}
 
@@ -894,16 +1016,14 @@ func checkResourceUsage(ctx context.Context, namespace string, threshold int) {
 				if cpu, ok := container.Resources.Limits["cpu"]; ok {
 					cpuLim = cpu.String()
 					// Update Prometheus metrics
-					if cpuValue, err := cpu.AsApproximateFloat64(); err == nil {
-						resourceUsage.WithLabelValues(namespace, pod.Name, "cpu_limit").Set(cpuValue)
-					}
+					cpuValue := cpu.AsApproximateFloat64()
+					resourceUsage.WithLabelValues(namespace, pod.Name, "cpu_limit").Set(cpuValue)
 				}
 				if mem, ok := container.Resources.Limits["memory"]; ok {
 					memLim = mem.String()
 					// Update Prometheus metrics
-					if memValue, err := mem.AsApproximateFloat64(); err == nil {
-						resourceUsage.WithLabelValues(namespace, pod.Name, "memory_limit").Set(memValue)
-					}
+					memValue := mem.AsApproximateFloat64()
+					resourceUsage.WithLabelValues(namespace, pod.Name, "memory_limit").Set(memValue)
 				}
 			}
 		}
@@ -911,4 +1031,12 @@ func checkResourceUsage(ctx context.Context, namespace string, threshold int) {
 		fmt.Printf("%-40s %-10s %-10s %-10s %-10s\n",
 			pod.Name, cpuReq, cpuLim, memReq, memLim)
 	}
+}
+
+// conditionalString returns the first string if condition is true, otherwise the second
+func conditionalString(condition bool, trueVal, falseVal string) string {
+	if condition {
+		return trueVal
+	}
+	return falseVal
 }

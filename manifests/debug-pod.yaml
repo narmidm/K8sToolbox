@@ -94,7 +94,7 @@ spec:
     - name: k8stoolbox
       image: narmidm/k8stoolbox:latest
       imagePullPolicy: IfNotPresent
-      command: ["k8stoolbox", "server"]
+      command: ["tail", "-f", "/dev/null"]
       ports:
         - name: http
           containerPort: 8080
@@ -144,7 +144,7 @@ spec:
       emptyDir: {}
     - name: config-volume
       configMap:
-        name: k8stoolbox
+        name: k8stoolbox-config
 ---
 # Service for accessing the web UI 
 apiVersion: v1
