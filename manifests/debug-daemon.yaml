@@ -41,7 +41,7 @@ apiVersion: apps/v1
 kind: DaemonSet
 metadata:
   name: k8stoolbox-daemonset
-  namespace: default
+  namespace: kube-system
   labels:
     app: k8stoolbox
 spec:
